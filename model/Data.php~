@@ -1,0 +1,247 @@
+<?php
+class Data
+{
+    private $sql,$db; 
+    public function __construct()
+   {
+        include_once(dirname(dirname(__FILE__)) . '/database/DB.php');
+        $this->db = new Database();
+        $this->sql="";
+    }
+    public function setPayment($paid,$reservationID)
+    {
+         $this->sql="INSERT INTO Payment (PaymentID, PaymentTypeID, PaymentAmount, PaymentDate, ReservationID) VALUES (NULL,1,".$paid.",'".date("Y-m-d")."',".$reservationID.")";
+         $result = $this->db->select($this->sql);
+         return $result;
+    }
+
+    public function selectAvailableRoomType()
+    {
+        $this->sql="SELECT * FROM RoomType natural join Room WHERE  Room.StatusDescription='vacant'";
+        $result = $this->db->select($this->sql);
+        return $result;
+    }
+    public function selectAvailablePaymentType()
+    {
+        $this->sql="SELECT PaymentType FROM PaymentType WHERE  PaymentType !='Cash'";
+        $result = $this->db->select($this->sql);
+        return $result;
+    }
+    public function selectRoomType()
+    {
+        $this->sql="SELECT * FROM RoomType";
+        $result = $this->db->select($this->sql);
+        return $result;
+    }
+    public function selectService()
+    {
+         $this->sql="SELECT * FROM ServiceType";
+         $result = $this->db->select($this->sql);
+         return $result;
+    }
+    public function selectBillCustomerInfo($reservationId,$customerId)
+    {
+         $this->sql="SELECT CustomerID,ReservationID,CustomerName,RoomID,CheckInDate,CheckOutDate FROM (SELECT CustomerID,ReservationID,CustomerName FROM Reservation natural join Customer) as info natural join (SELECT ReservationID,RoomID,CheckInDate,CheckOutDate FROM CheckIn natural join CheckOut) as cus where CustomerID=".$customerId."  AND ReservationID=".$reservationId;
+         $result = $this->db->select($this->sql);
+         return $result;
+    }
+    public function getCustomerInfo($reservationId,$customerId)
+    {
+        $this->sql="SELECT CustomerID,ReservationID,CustomerName,RoomNumber,ExpectedCheckinDate,ExpectedCheckinDate FROM Reservation natural join Customer where CustomerID=".$customerId."  AND ReservationID=".$reservationId;
+        $result = $this->db->select($this->sql);
+         return $result;
+      }
+
+    public function selectBill($reservationId)
+   {
+        $this->sql="SELECT ReservationID,BillID,ServiceName,count(NoOfService)as no,Price FROM(SELECT ReservationID,BillID,ServiceTypeID,NoOFService FROM Services natural join Bill WHERE ReservationID=".$reservationId.") as BillToService natural join ServiceType group by ServiceName";
+         $result = $this->db->select($this->sql);
+         return $result;
+   }
+   public function selectTotalBill($reservationId)
+   {
+       $this->sql="SELECT ReservationID,BillID,sum(Price) FROM(SELECT ReservationID,BillID,ServiceTypeID,NoOFService FROM Services natural join Bill WHERE ReservationID=".$reservationId.") as BillToService natural join ServiceType group by BillID";
+       $result = $this->db->select($this->sql);
+        $row=  mysqli_fetch_row($result);
+        $sum=0;
+        $sum+=$row[2];
+        $rate = $this->getRoomRate($reservationId);
+        $sum+=$rate;
+        return $sum;
+   }
+   public function getRoomRate($reservationId)
+   {
+       $this->sql="SELECT RoomRate FROM Reservation WHERE ReservationID=".$reservationId;
+        $result = $this->db->select($this->sql);
+        $row=  mysqli_fetch_row($result);
+        return $row[0];
+   }
+   public function getTotalPayed($reservationId)
+   {
+       $this->sql="SELECT sum(PaymentAmount) FROM Payment WHERE ReservationID=".$reservationId;
+       $result = $this->db->select($this->sql);
+       $row=  mysqli_fetch_row($result);
+       return $row[0];
+    }
+   public function selectRoomAndFare($roomType)
+   {
+       $this->sql="SELECT RoomNumber,RoomRate FROM Room natural join RoomType WHERE StatusDescription='vacant' AND RoomType='".$roomType."'";
+      $result = $this->db->select($this->sql);
+       $row=  mysqli_fetch_row($result);
+       return $row;
+   }
+   public function selectTransactionId($cur_tnx_dd)
+   {
+       $this->sql="SELECT * FROM Payment natural join PaymentType WHERE PaymentType='PayPal' AND TransactionId = '".$cur_tnx_dd."'";
+       $result = $this->db->select($this->sql);
+       return $result;
+   }
+   public function insertCustomer($book)
+   {
+       $this->sql="INSERT INTO Customer( CustomerID, CustomerName, AddStreet, AddCity, AddState, AddZip, AddCountry, Phone, Email, NID, CCNum, CCExp ) VALUES ( NULL , '".$book->customerName."', '".$book->addStreet."' , '".$book->addCity."' ,'".$book->addState."', '".$book->addZip."', '".$book->addCountry."', '".$book-> phone."', '".$book->email."' ,'".$book->nID."' ,'".$book->ccNum."' ,'".$book->month."-".$book->year."' )";
+       $result = $this->db->select($this->sql);
+       return $result;
+   }
+   public function selectCustomerID($book)
+   {
+       $this->sql="SELECT CustomerID FROM Customer WHERE Email='".$book->email."'";
+       $result = $this->db->select($this->sql);
+       $row=  mysqli_fetch_row($result);
+       return $row[0];
+   }
+   public function insertReservation($book)
+   {
+       $this->sql="INSERT INTO Reservation(ReservationID, CustomerID, ReservationDate, ExpectedCheckinDate, ExpectedCheckOutDate,ArrivalTime,NumGuests,RoomNumber,RoomRate)VALUES ( NULL , ".$book->customerID.", '".  date("d-m-Y")."' ,'".$book->checkInDate."' ,'".$book->checkOutDate."', '20:00:00', ".$book->noGuest.", ".$book->roomNumber." ,".$book->charge." )";
+       $result = $this->db->select($this->sql);
+       return $result;
+   }
+   public function selectReservationID($customerID)
+   {
+       $this->sql="SELECT ReservationID FROM Reservation WHERE CustomerID=".$customerID;
+       $result = $this->db->select($this->sql);
+       $row=  mysqli_fetch_row($result);
+       return $row[0];
+   }
+   public function insertPayment($book,$tnx_innd,$payID,$cost)
+   {
+echo "working";
+       $this->sql="INSERT INTO Payment (PaymentID,TransactionId, PaymentTypeID, CCNumber, CCExpirationMonth,CCExpirationYear,CCOwner, PaymentAmount, PaymentDate, ReservationID) VALUES (NULL,'".$tnx_innd."',".$payID.",'".$book->ccNum."','".$book->month."','".$book->year."', NULL,".$cost.",'".date("Y-m-d")."',".$book->reservationID.")";
+       $result = $this->db->select($this->sql);
+
+       return $result;
+   }
+   
+   public  function billID($book)
+   {
+       $this->sql="INSERT INTO Bill(BillID, ReservationID, Comments) VALUES ( NULL ,".$book->reservationID.", NULL )";
+       $result = $this->db->select($this->sql);
+       return $result;
+   }
+   public function updateRoom($roomNo,$status)
+   {
+       $this->sql="UPDATE Room SET StatusDescription = '".$status."' WHERE RoomNumber = ".$roomNo;
+       $result = $this->db->select($this->sql);
+       return $result;
+   }
+  
+   public function getCardInfo($reservationId)
+   {
+       $this->sql="SELECT CCNum,CCExp FROM Customer natural join Reservation WHERE ReservationID=".$reservationId;
+       $result = $this->db->select($this->sql);
+       $row=  mysqli_fetch_row($result);
+       return $row;
+   }
+   public function verifyAdmin($ID,$pass)
+   {
+        $this->sql="SELECT * FROM  User WHERE UserID='".$ID."' AND PassWord ='".$pass."'";
+        $result = $this->db->select($this->sql);
+        if (mysqli_num_rows($result)==0)
+        {
+            return 0;
+        }
+        else 
+        {
+            return 1;
+        }
+   }
+   public  function setServiceInfo($serviceTypeID,$serviceName,$description,$price)
+   {
+           $this->sql="INSERT INTO  ServiceType (ServiceTypeID,ServiceName,Description,Price) VALUES (".$serviceTypeID.", '".$serviceName."', '".$description."', ".$price.")";
+           $result = $this->db->select($this->sql);
+           return $result;
+   }
+   public function setRoomInfo($roomNumber,$roomTypeId,$roomType,$roomDesc,$numBeds,$roomRate,$path)
+   {
+         $this->sql="SELECT * FROM  RoomType WHERE RoomTypeID=".$roomTypeId;
+         $result = $this->db->select($this->sql);
+        if (mysqli_num_rows($result)==0)
+        {
+            $this->sql="INSERT INTO RoomType (RoomTypeID,RoomType,RoomDesc,RoomRate,image,NumBeds) VALUES (".$roomTypeId.", '".$roomType."', '".$roomDesc."', ".$roomRate.", '".$path."', ".$numBeds.")";
+           $result = $this->db->select($this->sql);
+        }
+        $this->sql="INSERT INTO Room (RoomNumber,RoomTypeID,StatusDescription) VALUES(".$roomNumber.", ".$roomTypeId.", "."'vacant')";
+        $result = $this->db->select($this->sql);
+        return $result;
+   }
+   public function checkTimeOutAndUpdate()
+   {
+       $this->sql ="UPDATE Room SET StatusDescription='vacant'  WHERE RoomNumber IN (SELECT RoomNumber FROM Reservation WHERE ArrivalTime<='".date('H:i:s',  time()+14400)."' AND ExpectedCheckinDate='".date('Y-m-d')."')";
+       $result = $this->db->select($this->sql);
+       return $result;
+   }
+   public function getAvailableRoom($checkIn,$checkOut)
+   {
+       $this->checkTimeOutAndUpdate();
+       $this->sql="SELECT RoomTypeID,RoomType,RoomDesc,RoomRate,image,NumBeds FROM (SELECT RoomNumber,RoomTypeID FROM  Room WHERE RoomNumber NOT IN(SELECT RoomNumber FROM Reservation WHERE ExpectedCheckinDate>='".$checkIn."' AND ExpectedCheckOutDate<='".$checkOut."') AND StatusDescription != 'fillUP') as result natural join  RoomType";
+       $result = $this->db->select($this->sql);
+       return $result;
+   }
+   public function getReservedRoomNumber($reservationId,$customerId)
+   {
+       $this->sql="SELECT RoomNumber FROM  Reservation natural join Customer WHERE ReservationID =".$reservationId." AND CustomerID=".$customerId;
+       $result = $this->db->select($this->sql);
+       $row=  mysqli_fetch_row($result);
+       return $row[0];
+    }
+    public function setCheckIn($reservationId,$customerId)
+    {
+       $roomNo= $this->getReservedRoomNumber($reservationId, $customerId);
+       $result=$this->updateRoom($roomNo,'fillUp');
+       $this->sql="INSERT INTO  CheckIn (CheckInID,ReservationID,RoomID,CheckInDate) VALUES( NULL,".$reservationId.", ".$roomNo.", '".date("Y-m-d")."')";
+       $result = $this->db->select($this->sql);
+       return $result;
+    }
+   public function setCheckOut($reservationId, $customerId)
+   {
+       $roomNo= $this->getReservedRoomNumber($reservationId, $customerId);
+       $result=$this->updateRoom($roomNo,'vacant');
+       $this->sql="INSERT INTO  CheckOut (CheckoutID,ReservationID,CheckOutDate) VALUES( NULL,".$reservationId.", '".date("Y-m-d")."')";
+       $result = $this->db->select($this->sql);
+       return $result;
+   }
+   public function getImage()
+   {
+       $this->sql="SELECT * FROM Image";
+       $result = $this->db->select($this->sql);
+       return  $result;
+   }
+   public function insertCustomerInfo($customerName,$addStreet,$addRoad,$addZip,$addState,$addCity,$addCountry,$phone,$email,$nID,$ccNum,$month,$year)
+   {
+       $this->sql="INSERT INTO Customer( CustomerID, CustomerName, AddStreet, AddCity, AddState, AddZip, AddCountry, Phone, Email, NID, CCNum, CCExp ) VALUES ( NULL , '".$customerName."', '".$addStreet."' , '".$addCity."' ,'".$addState."', '".$addZip."', '".$addCountry."', '".$phone."', '".$email."' ,'".$nID."' ,'".$ccNum."' ,'".$month."-".$year."' )";
+       $result = $this->db->select($this->sql);
+       return $result;
+   }
+   public function setImageInfo($ID,$path)
+   {
+       $this->sql="INSERT INTO Image(ImageID, Path) VALUES(NULL,'".$path."')";
+       $result = $this->db->select($this->sql);
+       return $result;
+   }
+
+   public function close()
+    {
+        $this->db->close();
+    }
+    
+}
+?>

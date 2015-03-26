@@ -1,0 +1,108 @@
+.room_info
+{
+    float: left;
+    padding-left: 50px;
+    padding-top: 0px;
+    width: 200px;
+}
+.room_pic
+{
+    padding-top: 20px;
+    margin: 20px;
+    padding-left: 300px;
+    
+}
+.service
+{
+    padding-left: 50px;
+    padding-top: 20px;
+}
+.reserved
+{
+    padding-top: 20px;
+    padding-left: 50px;
+}
+.reserved_direct
+{
+     padding-top: 20px;
+    padding-left: 250px;
+}
+.room
+{
+    padding-top: 20px;
+    padding-left: 50px;
+}
+.admin_menu
+{
+    padding-top: 20px;
+}
+.room_name
+{
+    float: left;
+    padding-left: 100px;
+}
+.room_charge
+{
+    padding-left: 500px;
+}
+.horizontal
+{
+    padding-top: 20px;
+}
+.room_label
+{
+    float: left;
+    width: 100px;
+    padding-left: 20px;
+}
+.room_submit
+{
+    padding-left: 350px;
+}
+.customer_label
+{
+    float: left;
+    width: 200px;
+    padding-left: 50px;
+}
+.cust_label
+{
+     float: left;
+    width: 200px;
+    padding-left: 250px;
+}
+.customer_submit
+{
+    padding-left: 500px;
+}
+.gallery
+{
+  padding-top: 20px; 
+}
+.room_info_insert
+{
+    height: 550px;
+}
+.upload_label
+{
+    float: left;
+    width: 80px;
+    padding-left: 80px;
+}
+.upload_submit
+{
+    padding-left: 360px;
+    
+}
+.upload_input
+{
+    padding-left: 300px;
+}
+.upload_info_insert
+{
+   height: 550px; 
+}
+.upload_h
+{
+    padding-left: 350px;
+}

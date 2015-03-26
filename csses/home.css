@@ -1,0 +1,34 @@
+.homeBody
+{
+    width: 1030px;
+    background-color: black;
+    padding-top: 0px;
+}
+.infoAndSerach
+{
+    height: 300px;
+    background-color: #009999;
+}
+.overview
+{
+    float: left;
+    padding-left: 30px;
+    width: 400px;
+}
+.onlineBooking
+{
+    float: left;
+    margin-left: 30px;
+    width: 500px;
+}
+.checkIn
+{
+    float: left;
+    margin-left: 30px;
+}
+.search
+{
+    clear: left;
+    margin-left: 150px;
+    margin-top: 50px;
+}
